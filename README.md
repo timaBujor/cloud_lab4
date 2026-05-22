@@ -2,37 +2,38 @@
 ## Облачное хранилище данных. Amazon S3
 
 **Дисциплина:** Облачные вычисления / Облачные технологии  
-**Выполнил:** Бужор Тимофей 
+**Выполнил:** Бужор Тимофей  
 **Вариант (Номер студента):** 04  
 **Имена бакетов:** `cc-lab4-pub-04`, `cc-lab4-priv-04`, `cc-lab4-web-04`  
-**Регион:** `eu-central-1` (Frankfurt)  
+**Регион:** `eu-central-1` (Frankfurt)
 
 ---
 
-### 1. Описание лабораторной работы и постановка задачи
+# 1. Описание лабораторной работы и постановка задачи
 
-#### Цель работы
-Знакомство с концепцией объектного хранилища на примере сервиса Amazon S3 (Simple Storage Service) и практическая отработка ключевых операций администрирования, автоматизации и хостинга:
-1. Создание бакетов с различными уровнями доступа (публичный и приватный).
-2. Загрузка, организация и структурирование объектов через AWS Management Console и интерфейс командной строки AWS CLI.
-3. Управление доступом к данным с помощью списков контроля доступа (ACL) и политик безопасности.
-4. Настройка механизмов версионирования для предотвращения случайного удаления данных.
-5. Автоматизация жизненного цикла объектов (Lifecycle Rules) для оптимизации стоимости хранения логов.
-6. Развертывание отказоустойчивого статического веб-сайта на базе S3 Static Website Hosting.
+## Цель работы
+Знакомство с Amazon S3 и выполнение основных операций управления облачным хранилищем:
+- создание бакетов с разными уровнями доступа;
+- загрузка объектов через AWS Console и AWS CLI;
+- управление доступом (ACL и политики);
+- версионирование объектов;
+- lifecycle rules;
+- статический веб-сайт на S3.
 
-#### Результаты обучения
-После выполнения данной работы студент:
-* Понимает фундаментальные отличия объектного хранилища от блочного (EBS) и файлового (EFS).
-* Умеет конфигурировать параметры безопасности S3, включая управление публичным доступом (Block Public Access) и списки ACL.
-* Владеет синтаксисом AWS CLI для эффективного копирования (`cp`), перемещения (`mv`) и двусторонней синхронизации (`sync`) директорий.
-* Способен проектировать стратегии архивации данных на основе классов хранения (Standard-IA, Glacier Deep Archive).
+## Результаты обучения
+После выполнения работы студент:
+- понимает различия S3 / EBS / EFS;
+- умеет настраивать безопасность S3;
+- использует AWS CLI;
+- проектирует lifecycle storage стратегии.
 
 ---
 
-### 2. Практическая часть: пошаговое выполнение
+# 2. Практическая часть
 
-#### Шаг 1. Подготовка локального окружения
-Перед началом работы с облачной консолью на локальной машине была создана строго определенная структура каталогов для имитации различных типов корпоративных данных (публичный контент, приватные системные логи и документация):
+---
+
+## Шаг 1. Подготовка структуры
 
 ```text
 s3-lab/
@@ -46,377 +47,174 @@ s3-lab/
  │   └── logs/
  │       └── activity.csv
  └── README.md
+```
 
- # Шаг 2. Создание бакетов в Amazon S3
+---
 
-Через AWS Management Console в регионе `eu-central-1 (Frankfurt)` были инициализированы три изолированных бакета.
+# Шаг 2. Создание бакетов
 
-## Публичный бакет (`cc-lab4-pub-04`)
+## Публичный бакет `cc-lab4-pub-04`
 
-- **Object Ownership:**  
-  Выбрана опция `ACLs enabled -> Bucket owner preferred`. Это необходимо для того, чтобы разрешить индивидуальное управление правами доступа на уровне конкретных файлов.
+- ACL включены
+- Block Public Access отключен
 
-- **Block all public access:**  
-  Флаг был полностью снят для обеспечения возможности чтения файлов из внешней сети. Подтверждено предупреждение консоли о потенциальных рисках безопасности.
-<img width="1280" height="548" alt="public" src="https://github.com/user-attachments/assets/837fbcf2-358b-485e-8928-dea5f1d8f432" />
+<img src="https://github.com/user-attachments/assets/837fbcf2-358b-485e-8928-dea5f1d8f432" width="800"/>
 
-## Приватный бакет (`cc-lab4-priv-04`)
+---
 
-Все настройки оставлены по умолчанию.
+## Приватный бакет `cc-lab4-priv-04`
 
-- Опция `Block all public access` включена.
-- Доступ из внешнего интернета заблокирован по умолчанию на уровне бакета.
-<img width="1280" height="550" alt="private" src="https://github.com/user-attachments/assets/4578b0c8-28b1-4f95-b08a-341a2774b637" />---
+- Block Public Access включен
+- доступ закрыт
 
-## Контрольный вопрос
+<img src="https://github.com/user-attachments/assets/4578b0c8-28b1-4f95-b08a-341a2774b637" width="800"/>
 
-### Чем отличаются два способа управления доступом к бакетам в S3: ACL и Object Ownership Enforced (Bucket Owner Enforced)?
+---
 
-### Ответ
+## Контрольный вопрос: ACL vs Object Ownership
 
-#### ACLs Enabled (устаревший/традиционный подход)
+ACL:
+- доступ на уровне объектов
+- гибкая, но устаревшая модель
 
-Позволяет настраивать права доступа (`read/write`) индивидуально для каждого конкретного объекта (файла) внутри бакета.
+Object Ownership:
+- доступ через IAM
+- ACL отключены
 
-Например:
-- файл А можно сделать публичным;
-- файл Б — оставить приватным.
+---
 
-#### Bucket Owner Enforced (современный подход, по умолчанию)
+## Block Public Access
 
-Полностью отключает списки ACL.
+Центральный механизм защиты от утечек данных.
 
-Все права доступа централизованно управляются только через:
-- IAM-политики (`Identity and Access Management`);
-- Bucket Policies.
+---
 
-Это исключает ситуацию, когда сторонний пользователь загружает в ваш бакет объект, к которому у владельца бакета нет доступа.
+# Шаг 3. Загрузка через Console
+
+- создан префикс `avatars/`
+- загружен `user1.jpg`
+- включен public-read
+
+<img src="https://github.com/user-attachments/assets/bcd5c0cf-fe10-4a76-a14a-d6157d45bbc4" width="800"/>
 
 ---
 
 ## Контрольный вопрос
 
-### Что означает опция `Block all public access` и зачем нужна данная настройка?
-
-### Ответ
-
-Эта настройка является централизованным «рубильником» безопасности (защитным барьером).
-
-Она:
-- переопределяет любые публичные разрешения;
-- блокирует доступ, заданный через ACL или Bucket Policies.
-
-Используется для защиты от:
-- случайных утечек данных;
-- ошибок конфигурации;
-- человеческого фактора.
+S3:
+- нет реальных папок
+- ключ = полный путь
 
 ---
 
-# Шаг 3. Загрузка объектов через AWS Management Console
+# Шаг 4. AWS CLI
 
-Осуществлен переход в созданный бакет `cc-lab4-pub-04`.
-
-## Выполненные действия
-
-1. Создан виртуальный префикс `avatars/`
-2. Загружен файл `user1.jpg`
-3. Во время загрузки в разделе `Permissions` активирован пункт:
-
-`Grant public-read access`
-<img width="1280" height="463" alt="user1" src="https://github.com/user-attachments/assets/bcd5c0cf-fe10-4a76-a14a-d6157d45bbc4" />
+```bash
+aws configure
+```
 
 ---
 
-## Контрольный вопрос
+## Upload objects
 
-### В чем отличается ключ (`object key`) от имени файла?
+```bash
+aws s3 cp s3-lab/public/avatars/user2.jpg s3://cc-lab4-pub-04/avatars/user2.jpg --acl public-read
+aws s3 cp s3-lab/public/content/logo.png s3://cc-lab4-pub-04/content/logo.png --acl public-read
+aws s3 cp s3-lab/private/logs/activity.csv s3://cc-lab4-priv-04/logs/activity.csv
+```
 
-### Ответ
-
-Amazon S3 использует плоскую структуру хранения (`flat storage`), в которой нет реальных физических папок.
-
-- **Имя файла** — конечная часть строки:
-
-`user1.jpg`
-
-- **Object Key** — полный уникальный путь объекта внутри бакета:
-
-`avatars/user1.jpg`
-
-Символ `/` используется только как визуальный разделитель для удобства структурирования.
+<img src="https://github.com/user-attachments/assets/380bab6f-80d0-4a43-b09a-3917325b761b" width="800"/>
 
 ---
 
-# Шаг 4. Загрузка объектов через AWS CLI
+## Разница команд
 
-Для выполнения автоматизированных операций использовался AWS CLI.
-
-Предварительно выполнена авторизация:
-
-`aws configure`
+- cp — копирование
+- mv — перемещение
+- sync — синхронизация
 
 ---
 
-## Загрузка второго аватара с публичным доступом
+# Шаг 5. Проверка доступа
 
-`aws s3 cp s3-lab/public/avatars/user2.jpg s3://cc-lab4-pub-04/avatars/user2.jpg --acl public-read`
+## Public file
 
-## Загрузка логотипа компании
+<img src="https://github.com/user-attachments/assets/668db5c5-857a-45d6-b41a-725f86946014" width="800"/>
 
-`aws s3 cp s3-lab/public/content/logo.png s3://cc-lab4-pub-04/content/logo.png --acl public-read`
+## Private file
 
-## Загрузка конфиденциального файла в приватный бакет
+<img src="https://github.com/user-attachments/assets/476ca123-ccbf-4145-9b8b-ecf7ae5f2e10" width="800"/>
 
-`aws s3 cp s3-lab/private/logs/activity.csv s3://cc-lab4-priv-04/logs/activity.csv`
-<img width="1280" height="200" alt="upload" src="https://github.com/user-attachments/assets/380bab6f-80d0-4a43-b09a-3917325b761b" />
+---
+
+# Шаг 6. Versioning
+
+- включен Versioning
+- объект хранит версии
+
+<img src="https://github.com/user-attachments/assets/9fa848de-1f12-4831-af2d-f8d6ced8d4bc" width="800"/>
 
 ---
 
 ## Контрольный вопрос
 
-### В чём разница между командами `aws s3 cp`, `mv` и `sync`?
-
-### Ответ
-
-#### `aws s3 cp`
-
-Копирует файл между локальной системой и S3.
-
-Исходный файл сохраняется.
-
-#### `aws s3 mv`
-
-Перемещает файл.
-
-После успешной передачи исходный объект удаляется.
-
-#### `aws s3 sync`
-
-Синхронизирует содержимое директорий.
-
-Копирует:
-- только новые файлы;
-- только измененные файлы.
-
-Аналогично утилите `rsync`.
+Versioning:
+- нельзя отключить полностью
+- можно только Suspend
 
 ---
 
-## Что делает флаг `--acl public-read`?
+# Шаг 7. Lifecycle rules
 
-Указывает Amazon S3 применить к объекту ACL-политику:
+- logs/ prefix
+- Standard → IA → Glacier → Delete
 
-`public-read`
-
-Это разрешает любому пользователю выполнять HTTP GET-запросы к файлу.
-
----
-
-# Шаг 5. Проверка доступа к объектам
-
-Для проверки конфигурации безопасности протестированы прямые URL.
-
-## Проверка публичного файла
-
-`https://cc-lab4-pub-04.s3.eu-central-1.amazonaws.com/avatars/user1.jpg`
-
-Результат:
-- файл успешно открывается;
-- HTTP-статус:
-
-`200 OK`
-<img width="1280" height="642" alt="avatars" src="https://github.com/user-attachments/assets/668db5c5-857a-45d6-b41a-725f86946014" />
+<img src="https://github.com/user-attachments/assets/676b66ae-e10d-4d9a-b8fc-54ac4ba2f0aa" width="800"/>
 
 ---
 
-## Проверка приватного файла
+## Storage Classes
 
-`https://cc-lab4-priv-04.s3.eu-central-1.amazonaws.com/logs/activity.csv`
-
-Возвращается ошибка:
-
-<img width="1275" height="202" alt="private_error" src="https://github.com/user-attachments/assets/476ca123-ccbf-4145-9b8b-ecf7ae5f2e10" />
-
-Доступ успешно заблокирован AWS.
+- Standard
+- Standard-IA
+- Glacier Deep Archive
 
 ---
 
-# Шаг 6. Версионирование объектов (Object Versioning)
+# Шаг 8. Static Website Hosting
 
-Во вкладке:
+<img src="https://github.com/user-attachments/assets/41b2a4e7-867b-4ee8-a7ae-7f6cf1eaa19f" width="800"/>
 
-`Properties -> Bucket Versioning`
-
-для обоих бакетов включен режим:
-
-`Enable`
+<img src="https://github.com/user-attachments/assets/bc4bf0aa-7597-4c71-90e9-678a9f997337" width="800"/>
 
 ---
 
-## Проверка механизма
+## Endpoint
 
-Файл `logo.png` был изменён и повторно загружен в S3.
+```text
+http://cc-lab4-web-04.s3-website.eu-central-1.amazonaws.com
+```
 
-После включения `Show versions` в консоли S3 видно:
-- под одним ключом `content/logo.png`;
-- хранятся несколько физических версий объекта;
-- каждая версия имеет уникальный `Version ID`.
-<img width="1280" height="447" alt="versions" src="https://github.com/user-attachments/assets/9fa848de-1f12-4831-af2d-f8d6ced8d4bc" />
+<img src="https://github.com/user-attachments/assets/50a03bea-57d5-4c8f-a7b1-d302028cb658" width="800"/>
 
 ---
 
-## Контрольный вопрос
+# 3. Источники
 
-### Что произойдёт, если выключить версионирование после его включения?
-
-### Ответ
-
-Полностью отключить Versioning невозможно.
-
-Можно только перевести бакет в режим:
-
-`Suspended`
-
-### При этом:
-
-- старые версии объектов сохраняются;
-- продолжается тарификация хранения;
-- новые версии получают `Version ID = null`;
-- при удалении создаётся `Delete Marker`.
-
----
-
-# Шаг 7. Создание Lifecycle-правил для приватного бакета
-
-Для оптимизации затрат в бакете `cc-lab4-priv-04` создано Lifecycle-правило.
-
-## Конфигурация правила
-
-| Параметр | Значение |
-|---|---|
-| Имя правила | `logs-archive` |
-| Префикс | `logs/` |
-
----
-
-## Жизненный цикл объекта
-
-| Событие | Срок |
-|---|---|
-| Переход в Standard-IA | 30 дней |
-| Переход в Glacier Deep Archive | 365 дней |
-| Полное удаление | 1825 дней |
-<img width="1280" height="456" alt="rules" src="https://github.com/user-attachments/assets/676b66ae-e10d-4d9a-b8fc-54ac4ba2f0aa" />
-
----
-
-## Схема жизненного цикла
-
-`[Локальное хранение] → [S3 Standard] → [S3 Standard-IA] → [Glacier Deep Archive] → [Удаление]`
-
----
-
-## Контрольный вопрос
-
-### Что такое Storage Class в Amazon S3 и зачем они нужны?
-
-### Ответ
-
-Storage Classes — это различные категории хранения данных в Amazon S3.
-
-Они отличаются:
-- стоимостью;
-- доступностью;
-- временем восстановления данных;
-- минимальным сроком хранения.
-
-### Примеры
-
-| Класс | Назначение |
-|---|---|
-| `S3 Standard` | Часто используемые файлы |
-| `S3 Standard-IA` | Редкий доступ |
-| `Glacier Deep Archive` | Долгосрочные архивы |
-
----
-
-# Шаг 8. Создание статического веб-сайта на базе S3
-
-Развернут бакет:
-
-`cc-lab4-web-04`
-
-## Выполненные настройки
-
-- включены ACL;
-- отключен `Block Public Access`.
-<img width="1280" height="478" alt="new_backet" src="https://github.com/user-attachments/assets/41b2a4e7-867b-4ee8-a7ae-7f6cf1eaa19f" />
-
----
-
-## Настройка статического хостинга
-
-В разделе:
-
-`Properties -> Static website hosting`
-
-выбран режим:
-
-`Host a static website`
-
-Главным документом назначен:
-
-`index.html`
-<img width="1280" height="499" alt="edit" src="https://github.com/user-attachments/assets/bc4bf0aa-7597-4c71-90e9-678a9f997337" />
-
----
-
-## Синхронизация сайта
-
-`aws s3 sync s3-lab/web-site/ s3://cc-lab4-web-04/ --acl public-read`
-
----
-
-## Endpoint сайта
-
-`http://cc-lab4-web-04.s3-website.eu-central-1.amazonaws.com`
-
-Сайт успешно открывается из внешнего интернета.
-<img width="1280" height="643" alt="result" src="https://github.com/user-attachments/assets/50a03bea-57d5-4c8f-a7b1-d302028cb658" />
-
----
-
-# 3. Список использованных источников
-
-1. Amazon S3 User Guide
-2. AWS CLI Command Reference — S3
-3. AWS Object Ownership Documentation
-4. AWS S3 Lifecycle Documentation
+- AWS S3 Documentation  
+- AWS CLI Reference  
+- AWS Lifecycle Policies  
 
 ---
 
 # 4. Вывод
 
-В ходе лабораторной работы были изучены основные механизмы работы с Amazon S3.
+В работе изучены:
+- S3 buckets
+- ACL и IAM
+- CLI автоматизация
+- Versioning
+- Lifecycle policies
+- Static website hosting
 
-Получен практический опыт:
-- создания бакетов;
-- настройки ACL;
-- разграничения доступа;
-- загрузки объектов через AWS CLI;
-- настройки Versioning;
-- создания Lifecycle Rules;
-- развертывания статического веб-сайта.
-
-Использование:
-- префиксов;
-- автоматизации через AWS CLI;
-- жизненных циклов хранения;
-
-позволяет строить:
-- безопасную;
-- масштабируемую;
-- экономически эффективную облачную инфраструктуру.
-
-Настройка статического хостинга подтвердила возможность использования Amazon S3 как serverless-платформы для размещения веб-сайтов без администрирования виртуальных серверов.
+Amazon S3 позволяет строить serverless инфраструктуру хранения и хостинга.
